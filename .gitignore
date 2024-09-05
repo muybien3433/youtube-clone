@@ -1,0 +1,34 @@
+# Compiled source #
+target/
+bin/
+out/
+
+# Logs #
+logs/
+
+# IntelliJ IDEA #
+.idea/
+demo.iml
+
+# VS Code #
+.vscode/
+
+# Node.js #
+node_modules/
+
+# Maven #
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle #
+.gradle/
+build/
+
+# Eclipse #
+.classpath
+.project
+
+# macOS #
+.DS_Store
+
+# Environment variables #
+.env
