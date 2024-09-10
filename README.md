@@ -43,7 +43,7 @@ Ensure you have the following installed before running the project:
 
 - *Videos*: `/videos`
    - `GET /` – Fetch all videos.
-   - `GET /{videoId}"` – Fetch a video (adds to watch history when authenticated).
+   - `GET /{videoId}` – Fetch a video (adds to watch history when authenticated).
    - `POST /upload` – Upload video.
    - `POST /{videoId}/like` - Like video.
    - `POST /{videoId}/dislike` - Dislike video.
