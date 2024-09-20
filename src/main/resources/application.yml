@@ -4,7 +4,7 @@ server:
   port: 8080
 spring:
   datasource:
-    url: "jdbc:mysql://your-db-url/your-schema-name""
+    url: "jdbc:mysql://your-db-url/your-schema-name"
     username: "your-db-username"
     password: "your-db-password"
   jpa:
