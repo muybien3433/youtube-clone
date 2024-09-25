@@ -21,12 +21,12 @@ public class CommentService {
 
     @Transactional
     public void addComment(Integer videoId, CommentRequest request, Authentication connectedUser) {
-        var fetchedUser = (User) connectedUser.getPrincipal();
-        var fetchedVideo = videoService.findVideoById(videoId);
+        var user = (User) connectedUser.getPrincipal();
+        var video = videoService.findVideoById(videoId);
         var comment = Comment.builder()
-                .authorName(fetchedUser.getFullName())
-                .user(fetchedUser)
-                .video(fetchedVideo)
+                .authorName(user.getFullName())
+                .user(user)
+                .video(video)
                 .commentInput(request.commentInput())
                 .createdDate(LocalDateTime.now())
                 .build();
@@ -36,8 +36,8 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public List<CommentDTO> getAllCommentsByVideoId(Integer videoId) {
-        var fetchedVideo = videoService.findVideoById(videoId);
-        Set<Comment> comments = fetchedVideo.getComments();
+        var video = videoService.findVideoById(videoId);
+        Set<Comment> comments = video.getComments();
 
         return comments.stream().map(commentDTOMapper::toDTO).toList();
     }
