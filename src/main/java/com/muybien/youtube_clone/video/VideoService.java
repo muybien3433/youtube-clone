@@ -126,37 +126,6 @@ public class VideoService {
         return new VideoUploadResponse(video.getVideoUrl());
     }
 
-    @Transactional
-    public void deleteVideo(Integer videoId, Authentication connectedUser) {
-        var video = findVideoById(videoId);
-        boolean isVideOwnedByUser = isVideOwnedByUser(video, connectedUser);
-
-        if (isVideOwnedByUser) {
-            deleteVideoFromDatabaseAndS3(video);
-        } else {
-            throw new FileDeletionForbiddenException("You are not allowed to delete this video.");
-        }
-    }
-
-    private boolean isVideOwnedByUser(Video video, Authentication connectedUser) {
-        return video.getUser().equals(connectedUser.getPrincipal());
-    }
-
-    private void deleteVideoFromDatabaseAndS3(Video video) {
-        String videoUrl = video.getVideoUrl();
-        String thumbnailUrl = video.getThumbnailUrl();
-
-        deleteVideoAndThumbnailFromS3(videoUrl, thumbnailUrl);
-
-        try {
-            videoRepository.delete(video);
-        } catch (DataIntegrityViolationException e) {
-            throw new DatabaseException("Filed to delete video from database due to integrity violation.", e);
-        } catch (DatabaseException e) {
-            throw new DatabaseException("Failed to delete video from database.", e);
-        }
-    }
-
     private void saveVideo(Video video, String videoUrl, String thumbnailUrl, Authentication connectedUser) {
         try {
             isVideoAndThumbnailUrlValid(videoUrl, thumbnailUrl);
@@ -176,6 +145,30 @@ public class VideoService {
 
     private boolean isUrlNonValid(String videoUrl) {
         return !videoUrl.startsWith("http");
+    }
+
+    @Transactional
+    public void deleteVideo(Integer videoId, Authentication connectedUser) {
+        var video = findVideoById(videoId);
+        var user = (User) connectedUser.getPrincipal();
+        boolean isVideOwnedByUser = video.getUser().getEmail().equals(user.getEmail());
+
+        if (isVideOwnedByUser) {
+            String videoUrl = video.getVideoUrl();
+            String thumbnailUrl = video.getThumbnailUrl();
+
+            deleteVideoAndThumbnailFromS3(videoUrl, thumbnailUrl);
+
+            try {
+                videoRepository.delete(video);
+            } catch (DataIntegrityViolationException e) {
+                throw new DatabaseException("Filed to delete video from database due to integrity violation.", e);
+            } catch (DatabaseException e) {
+                throw new DatabaseException("Failed to delete video from database.", e);
+            }
+        } else {
+            throw new FileDeletionForbiddenException("You are not allowed to delete this video.");
+        }
     }
 
     void deleteVideoAndThumbnailFromS3(String videoUrl, String thumbnailUrl) {
