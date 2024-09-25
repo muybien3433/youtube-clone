@@ -6,7 +6,6 @@ import com.muybien.youtube_clone.handler.InvalidFileUrlException;
 import com.muybien.youtube_clone.handler.VideoNotFoundException;
 import com.muybien.youtube_clone.s3aws.S3Service;
 import com.muybien.youtube_clone.user.User;
-import com.muybien.youtube_clone.user.UserRepository;
 import com.muybien.youtube_clone.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -28,7 +27,6 @@ public class VideoService {
     private final VideoDTOMapper videoDTOMapper;
     private final UserService userService;
     private final S3Service s3Service;
-    private final UserRepository userRepository;
 
     @Transactional
     public VideoDTO getVideoDetails(Integer videoId, Authentication connectedUser) {
