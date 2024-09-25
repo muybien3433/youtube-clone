@@ -8,7 +8,7 @@ It also includes features for managing user subscriptions, video comments, notif
 ## Features
 
 - **User Authentication**: Sign up, log in, and log out securely.
-- **Video Management**: Upload videos.
+- **Video Management**: Upload/delete videos.
 - **Comments**: Add comments on videos pages.
 - **Watch History**: Track and display a user’s watched video history.
 - **Subscriptions**: Subscribe to other users to follow their content.
