@@ -38,6 +38,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(BAD_REQUEST).body(e.getMessage());
     }
 
+    @ExceptionHandler(FileDeletionForbiddenException.class)
+    public ResponseEntity<String> handleFileDeletionForbiddenException(FileDeletionForbiddenException e) {
+        return ResponseEntity.status(FORBIDDEN).body(e.getMessage());
+    }
+
     @ExceptionHandler(FileDeletionException.class)
     public ResponseEntity<String> handleFileDeletionException(FileDeletionException e) {
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(e.getMessage());
