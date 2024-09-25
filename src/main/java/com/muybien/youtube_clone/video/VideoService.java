@@ -1,13 +1,16 @@
 package com.muybien.youtube_clone.video;
 
 import com.muybien.youtube_clone.handler.DatabaseException;
+import com.muybien.youtube_clone.handler.FileDeletionForbiddenException;
 import com.muybien.youtube_clone.handler.InvalidFileUrlException;
 import com.muybien.youtube_clone.handler.VideoNotFoundException;
 import com.muybien.youtube_clone.s3aws.S3Service;
 import com.muybien.youtube_clone.user.User;
+import com.muybien.youtube_clone.user.UserRepository;
 import com.muybien.youtube_clone.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,17 +28,18 @@ public class VideoService {
     private final VideoDTOMapper videoDTOMapper;
     private final UserService userService;
     private final S3Service s3Service;
+    private final UserRepository userRepository;
 
     @Transactional
     public VideoDTO getVideoDetails(Integer videoId, Authentication connectedUser) {
-        var fetchedVideo = findVideoById(videoId);
+        var video = findVideoById(videoId);
 
         if (userService.isUserAuthenticated(connectedUser)) {
             userService.addVideoToWatchedVideosHistory(videoId, connectedUser);
         }
-        incrementVideoViewCounter(fetchedVideo);
+        incrementVideoViewCounter(video);
 
-        return videoDTOMapper.toDTO(fetchedVideo);
+        return videoDTOMapper.toDTO(video);
     }
 
     private void incrementVideoViewCounter(Video video) {
@@ -45,40 +49,40 @@ public class VideoService {
 
     @Transactional
     public VideoDTO incrementVideoLike(Integer videoId, Authentication connectedUser) {
-        var fetchedVideo = findVideoById(videoId);
+        var video = findVideoById(videoId);
 
         if (isVideoLikedByUser(videoId, connectedUser)) {
-            fetchedVideo.decrementVideoLikesCounter();
+            video.decrementVideoLikesCounter();
             userService.removeVideoFromLikedVideos(videoId, connectedUser);
         } else {
             if (isVideoDisLikedByUser(videoId, connectedUser)) {
-                fetchedVideo.decrementVideoDisLikeCounter();
+                video.decrementVideoDisLikeCounter();
                 userService.removeVideoFromDisLikedVideos(videoId, connectedUser);
             }
-            fetchedVideo.incrementVideoLikeCounter();
+            video.incrementVideoLikeCounter();
             userService.addVideoToLikedVideos(videoId, connectedUser);
         }
-        videoRepository.save(fetchedVideo);
-        return videoDTOMapper.toDTO(fetchedVideo);
+        videoRepository.save(video);
+        return videoDTOMapper.toDTO(video);
     }
 
     @Transactional
     public VideoDTO incrementVideoDisLike(Integer videoId, Authentication connectedUser) {
-        var fetchedVideo = findVideoById(videoId);
+        var video = findVideoById(videoId);
 
         if (isVideoDisLikedByUser(videoId, connectedUser)) {
-            fetchedVideo.decrementVideoDisLikeCounter();
+            video.decrementVideoDisLikeCounter();
             userService.removeVideoFromDisLikedVideos(videoId, connectedUser);
         } else {
             if (isVideoLikedByUser(videoId, connectedUser)) {
-                fetchedVideo.decrementVideoLikesCounter();
+                video.decrementVideoLikesCounter();
                 userService.removeVideoFromLikedVideos(videoId, connectedUser);
             }
-            fetchedVideo.incrementVideoDisLikeCounter();
+            video.incrementVideoDisLikeCounter();
             userService.addVideoToDisLikedVideos(videoId, connectedUser);
         }
-        videoRepository.save(fetchedVideo);
-        return videoDTOMapper.toDTO(fetchedVideo);
+        videoRepository.save(video);
+        return videoDTOMapper.toDTO(video);
     }
 
 
@@ -104,12 +108,12 @@ public class VideoService {
                                            String description,
                                            Authentication connectedUser) {
 
-        var fetchedUser = (User) connectedUser.getPrincipal();
+        var user = (User) connectedUser.getPrincipal();
         String videoUrl = s3Service.uploadFileAndFetchFileUrl(videoFile);
         String thumbnailUrl = s3Service.uploadFileAndFetchFileUrl(thumbnailFile);
 
         var video = Video.builder()
-                .user(fetchedUser)
+                .user(user)
                 .videoUrl(videoUrl)
                 .thumbnailUrl(thumbnailUrl)
                 .title(title)
@@ -124,6 +128,37 @@ public class VideoService {
         return new VideoUploadResponse(video.getVideoUrl());
     }
 
+    @Transactional
+    public void deleteVideo(Integer videoId, Authentication connectedUser) {
+        var video = findVideoById(videoId);
+        boolean isVideOwnedByUser = isVideOwnedByUser(video, connectedUser);
+
+        if (isVideOwnedByUser) {
+            deleteVideoFromDatabaseAndS3(video);
+        } else {
+            throw new FileDeletionForbiddenException("You are not allowed to delete this video.");
+        }
+    }
+
+    private boolean isVideOwnedByUser(Video video, Authentication connectedUser) {
+        return video.getUser().equals(connectedUser.getPrincipal());
+    }
+
+    private void deleteVideoFromDatabaseAndS3(Video video) {
+        String videoUrl = video.getVideoUrl();
+        String thumbnailUrl = video.getThumbnailUrl();
+
+        deleteVideoAndThumbnailFromS3(videoUrl, thumbnailUrl);
+
+        try {
+            videoRepository.delete(video);
+        } catch (DataIntegrityViolationException e) {
+            throw new DatabaseException("Filed to delete video from database due to integrity violation.", e);
+        } catch (DatabaseException e) {
+            throw new DatabaseException("Failed to delete video from database.", e);
+        }
+    }
+
     private void saveVideo(Video video, String videoUrl, String thumbnailUrl, Authentication connectedUser) {
         try {
             isVideoAndThumbnailUrlValid(videoUrl, thumbnailUrl);
@@ -131,13 +166,13 @@ public class VideoService {
             userService.sendNotificationToSubscribers(connectedUser);
         } catch (DataAccessException e) {
             deleteVideoAndThumbnailFromS3(videoUrl, thumbnailUrl);
-            throw new DatabaseException("Failed to save video to database", e);
+            throw new DatabaseException("Failed to save video to database.", e);
         }
     }
 
     private void isVideoAndThumbnailUrlValid(String videoUrl, String thumbnailUrl) {
          if (isUrlNonValid(videoUrl) || isUrlNonValid(thumbnailUrl)) {
-             throw new InvalidFileUrlException("Invalid video or/and thumbnail URL");
+             throw new InvalidFileUrlException("Invalid video or/and thumbnail URL.");
          }
     }
 

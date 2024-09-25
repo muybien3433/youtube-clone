@@ -4,6 +4,7 @@ import com.muybien.youtube_clone.comment.CommentRequest;
 import com.muybien.youtube_clone.comment.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,15 @@ public class VideoUserController {
     ) {
         return videoService.uploadVideo(request.video(), request.thumbnail(),
                 request.title(), request.description(), connectedUser);
+    }
+
+    @DeleteMapping("{videoId}/delete")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteVideo(
+            @PathVariable Integer videoId,
+            Authentication connectedUser
+    ) {
+        videoService.deleteVideo(videoId, connectedUser);
     }
 
     @PostMapping("{videoId}/like")
