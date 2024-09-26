@@ -32,11 +32,11 @@ public class VideoUserController {
 
     @DeleteMapping("{videoId}/delete")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteVideo(
+    public VideoDeletionResponse deleteVideo(
             @PathVariable Integer videoId,
             Authentication connectedUser
     ) {
-        videoService.deleteVideo(videoId, connectedUser);
+        return videoService.deleteVideo(videoId, connectedUser);
     }
 
     @PostMapping("{videoId}/like")

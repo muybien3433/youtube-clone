@@ -148,7 +148,7 @@ public class VideoService {
     }
 
     @Transactional
-    public void deleteVideo(Integer videoId, Authentication connectedUser) {
+    public VideoDeletionResponse deleteVideo(Integer videoId, Authentication connectedUser) {
         var video = findVideoById(videoId);
         var user = (User) connectedUser.getPrincipal();
         boolean isVideOwnedByUser = video.getUser().getEmail().equals(user.getEmail());
@@ -169,6 +169,7 @@ public class VideoService {
         } else {
             throw new FileDeletionForbiddenException("You are not allowed to delete this video.");
         }
+        return new VideoDeletionResponse("Successfully deleted video.");
     }
 
     void deleteVideoAndThumbnailFromS3(String videoUrl, String thumbnailUrl) {
