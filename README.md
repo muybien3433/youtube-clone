@@ -48,6 +48,7 @@ Ensure you have the following installed before running the project:
    - `POST /{videoId}/like` - Like video.
    - `POST /{videoId}/dislike` - Dislike video.
    - `POST /{videoId}/comment` - Comment video.
+   - `DELETE /{videoId}/delete` – Delete video.
 
 - *User*: `/users`
     - `GET /history` – Display watched history.
