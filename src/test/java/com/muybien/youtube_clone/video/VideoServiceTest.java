@@ -2,6 +2,7 @@ package com.muybien.youtube_clone.video;
 
 import com.muybien.youtube_clone.comment.Comment;
 import com.muybien.youtube_clone.handler.DatabaseException;
+import com.muybien.youtube_clone.handler.FileDeletionForbiddenException;
 import com.muybien.youtube_clone.handler.InvalidFileUrlException;
 import com.muybien.youtube_clone.handler.VideoNotFoundException;
 import com.muybien.youtube_clone.s3aws.S3Service;
@@ -46,6 +47,7 @@ public class VideoServiceTest {
         User user = User.builder()
                 .firstname("Joe")
                 .lastname("Smith")
+                .email("joe.smith@gmail.com")
                 .build();
 
         Comment comment = Comment.builder()
@@ -263,6 +265,33 @@ public class VideoServiceTest {
         assertThrows(DatabaseException.class, () ->
                 videoService.uploadVideo(videoFile, thumbnailFile, "Title", "Description", connectedUser));
         verify(s3Service, times(2)).deleteFileFromS3(videoUrl); // 2 times because bc video and thumb delete separately
+    }
+
+    @Test
+    public void testDeleteVideo() {
+        var user =  User.builder().email("joe.smith@gmail.com").build();
+
+        when(videoRepository.findById(videoId)).thenReturn(Optional.ofNullable(video));
+        when(connectedUser.getPrincipal()).thenReturn(user);
+
+        videoService.deleteVideo(videoId, connectedUser);
+
+        verify(videoRepository, times(1)).findById(videoId);
+        verify(videoRepository, times(1)).delete(video);
+    }
+
+    @Test
+    public void testDeleteVideoWhenUserIsNotVideoOwner() {
+        var user =  User.builder().build();
+
+        when(videoRepository.findById(videoId)).thenReturn(Optional.ofNullable(video));
+        when(connectedUser.getPrincipal()).thenReturn(user);
+
+        assertThrows(FileDeletionForbiddenException.class, () ->
+                videoService.deleteVideo(videoId, connectedUser));
+
+        verify(videoRepository, times(1)).findById(videoId);
+        verify(videoRepository, never()).delete(video);
     }
 
     @Test
