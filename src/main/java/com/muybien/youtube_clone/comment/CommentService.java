@@ -35,7 +35,7 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommentDTO> getAllCommentsByVideoId(Integer videoId) {
+    List<CommentDTO> getAllCommentsByVideoId(Integer videoId) {
         var video = videoService.findVideoById(videoId);
         Set<Comment> comments = video.getComments();
 

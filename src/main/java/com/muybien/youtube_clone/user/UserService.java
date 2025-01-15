@@ -71,8 +71,6 @@ public class UserService {
         return user.getDisLikedVideos().stream().anyMatch(disLikedVideo -> disLikedVideo.equals(videoId));
     }
 
-    // method returns reversed LinkedList to obtain
-    // recent watched video from latest to oldest
     @Transactional(readOnly = true)
     public List<Integer> getUserWatchVideosHistory(Authentication connectedUser) {
         var user = (User) connectedUser.getPrincipal();
