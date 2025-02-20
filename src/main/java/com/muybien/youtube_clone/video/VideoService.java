@@ -29,7 +29,7 @@ public class VideoService {
     private final S3Service s3Service;
 
     @Transactional
-    VideoDTO getVideoDetails(Integer videoId, Authentication connectedUser) {
+    public VideoDTO getVideoDetails(Integer videoId, Authentication connectedUser) {
         var video = findVideoById(videoId);
 
         if (userService.isUserAuthenticated(connectedUser)) {
@@ -46,7 +46,7 @@ public class VideoService {
     }
 
     @Transactional
-    VideoDTO incrementVideoLike(Integer videoId, Authentication connectedUser) {
+    public VideoDTO incrementVideoLike(Integer videoId, Authentication connectedUser) {
         var video = findVideoById(videoId);
 
         if (isVideoLikedByUser(videoId, connectedUser)) {
@@ -65,7 +65,7 @@ public class VideoService {
     }
 
     @Transactional
-    VideoDTO incrementVideoDisLike(Integer videoId, Authentication connectedUser) {
+    public VideoDTO incrementVideoDisLike(Integer videoId, Authentication connectedUser) {
         var video = findVideoById(videoId);
 
         if (isVideoDisLikedByUser(videoId, connectedUser)) {
@@ -100,7 +100,7 @@ public class VideoService {
     }
 
     @Transactional
-    VideoUploadResponse uploadVideo(MultipartFile videoFile,
+    public VideoUploadResponse uploadVideo(MultipartFile videoFile,
                                            MultipartFile thumbnailFile,
                                            String title,
                                            String description,
@@ -148,7 +148,7 @@ public class VideoService {
     }
 
     @Transactional
-    VideoDeletionResponse deleteVideo(Integer videoId, Authentication connectedUser) {
+    public VideoDeletionResponse deleteVideo(Integer videoId, Authentication connectedUser) {
         var video = findVideoById(videoId);
         var user = (User) connectedUser.getPrincipal();
         boolean isVideOwnedByUser = video.getUser().getEmail().equals(user.getEmail());
@@ -182,7 +182,7 @@ public class VideoService {
     }
 
     @Transactional(readOnly = true)
-    List<VideoDTO> findAllVideos() {
+    public List<VideoDTO> findAllVideos() {
         return videoRepository.findAll().stream()
                 .map(videoDTOMapper::toDTO).toList();
     }

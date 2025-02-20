@@ -26,7 +26,7 @@ public class AuthenticationService {
     private final UserRepository userRepository;
 
     @Transactional
-    AuthenticationResponse register(RegisterRequest request) {
+    public AuthenticationResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new EmailAlreadyTakenException("Email is already taken.");
         }
@@ -47,7 +47,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    AuthenticationResponse authenticate(AuthenticationRequest request) {
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var user = repository.findByEmail(request.email())
                 .orElseThrow(() -> new UserNotFoundException(
                         "User not found, email: " + request.email()));
